@@ -1039,18 +1039,18 @@ function renderStaffTable() {
     tbody.innerHTML = appData.staff
         .map(
             (s) => `
-                 践
-                     <td>${s.name}践
-                     <td>${s.type === "doctor" ? "طبيب" : s.type === "nurse" ? "ممرض" : s.type === "admin" ? "إداري" : "فني"}践
-                     <td>${s.specialty || "—"}践
-                     <td>${formatCurrency(s.salary)}践
-                     <td>${s.phone}践
-                     <td>${formatDate(s.hireDate)}践
+                 
+                     <td>${s.name}
+                     <td>${s.type === "doctor" ? "طبيب" : s.type === "nurse" ? "ممرض" : s.type === "admin" ? "إداري" : "فني"}
+                     <td>${s.specialty || "—"}
+                     <td>${formatCurrency(s.salary)}
+                     <td>${s.phone}
+                     <td>${formatDate(s.hireDate)}
                      <td class="action-icons">
                          <i class="fas fa-edit" onclick="editStaff(${s.id})"></i>
                          <i class="fas fa-trash-alt" onclick="deleteStaff(${s.id})"></i>
                          <i class="fas fa-print" onclick="printStaffCard(${s.id})"></i>
-                     践
+                     
                   </tr>
             `,
         )
@@ -1165,19 +1165,19 @@ function renderInventoryTable() {
     tbody.innerHTML = appData.inventory
         .map(
             (i) => `
-                 践
-                     <td>${i.name}践
-                     <td>${i.category}践
-                     <td>${i.quantity}践
-                     <td>${formatCurrency(i.purchasePrice)}践
-                     <td>${formatCurrency(i.sellingPrice)}践
-                     <td>${formatDate(i.expiryDate)}践
-                     <td>${formatCurrency(i.quantity * i.purchasePrice)}践
+                 
+                     <td>${i.name}
+                     <td>${i.category}
+                     <td>${i.quantity}
+                     <td>${formatCurrency(i.purchasePrice)}
+                     <td>${formatCurrency(i.sellingPrice)}
+                     <td>${formatDate(i.expiryDate)}
+                     <td>${formatCurrency(i.quantity * i.purchasePrice)}
                      <td class="action-icons">
                          <i class="fas fa-edit" onclick="editItem(${i.id})"></i>
                          <i class="fas fa-trash-alt" onclick="deleteItem(${i.id})"></i>
                          <i class="fas fa-print" onclick="printItemLabel(${i.id})"></i>
-                     践
+                     
                   </tr>
             `,
         )
@@ -1286,18 +1286,18 @@ function renderAppointmentsTable() {
     tbody.innerHTML = appData.appointments
         .map(
             (a) => `
-                 践
-                     <td>${a.patientName}践
-                     <td>${a.doctorName}践
-                     <td>${formatDate(a.date)}践
-                     <td>${a.time}践
-                     <td>${a.type}践
-                     <td><span class="${a.status === "مؤكد" ? "badge-income" : "badge-expense"}">${a.status}</span>践
+                 
+                     <td>${a.patientName}
+                     <td>${a.doctorName}
+                     <td>${formatDate(a.date)}
+                     <td>${a.time}
+                     <td>${a.type}
+                     <td><span class="${a.status === "مؤكد" ? "badge-income" : "badge-expense"}">${a.status}</span>
                      <td class="action-icons">
                          <i class="fas fa-edit" onclick="editAppointment(${a.id})"></i>
                          <i class="fas fa-trash-alt" onclick="deleteAppointment(${a.id})"></i>
                          <i class="fas fa-print" onclick="printAppointmentCard(${a.id})"></i>
-                     践
+                     
                   </tr>
             `,
         )
@@ -1627,13 +1627,13 @@ function generateReport() {
                 .map(
                     (i) => `
                     <tr>
-                        <td>${i.name}践
-                        <td>${i.category}践
-                        <td>${i.quantity}践
-                        <td>${formatCurrency(i.purchasePrice)}践
-                        <td>${formatCurrency(i.sellingPrice)}践
-                        <td>${formatDate(i.expiryDate)}践
-                        <td>${formatCurrency(i.quantity * i.purchasePrice)}践
+                        <td>${i.name}
+                        <td>${i.category}
+                        <td>${i.quantity}
+                        <td>${formatCurrency(i.purchasePrice)}
+                        <td>${formatCurrency(i.sellingPrice)}
+                        <td>${formatDate(i.expiryDate)}
+                        <td>${formatCurrency(i.quantity * i.purchasePrice)}
                     </tr>
                 `,
                 )
