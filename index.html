@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Edarty Pro | نظام إدارة المؤسسات الطبية المتكامل</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJS لتصدير Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF لطباعة التقارير -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- شريط تسجيل الدخول والحالة -->
+    <div class="login-bar" id="loginBar">
+        <div class="login-container">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <i class="fas fa-user-circle"></i>
+                <span id="userName">Admin</span>
+                <span id="userRole" class="user-role"></span>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            </div>
+            <div class="login-form" id="loginForm">
+                <select id="roleSelect">
+                    <option value="admin">مدير النظام</option>
+                    <option value="accountant">محاسب</option>
+                    <option value="reception">موظف استقبال</option>
+                </select>
+                <input type="password" id="passwordInput" placeholder="كلمة المرور">
+                <button class="btn-login" id="loginBtn">دخول</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- الرأس -->
+        <div class="top-bar">
+            <div class="logo">
+                <h1><i class="fas fa-stethoscope"></i> Edarty Pro</h1>
+                <p>النظام المتكامل لإدارة المؤسسات الطبية</p>
+            </div>
+            <div class="date-box" id="currentDate"></div>
+        </div>
+
+        <!-- تبويبات النظام -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-chart-line"></i> لوحة التحكم</button>
+            <button class="tab-btn" data-tab="transactions"><i class="fas fa-exchange-alt"></i> المعاملات المالية</button>
+            <button class="tab-btn" data-tab="patients"><i class="fas fa-users"></i> إدارة المرضى</button>
+            <button class="tab-btn" data-tab="doctors"><i class="fas fa-user-md"></i> الأطباء والموظفين</button>
+            <button class="tab-btn" data-tab="inventory"><i class="fas fa-boxes"></i> المخزون والأدوية</button>
+            <button class="tab-btn" data-tab="appointments"><i class="fas fa-calendar-check"></i> المواعيد</button>
+            <button class="tab-btn" data-tab="reports"><i class="fas fa-file-alt"></i> التقارير المتقدمة</button>
+            <button class="tab-btn" data-tab="settings"><i class="fas fa-cog"></i> الإعدادات</button>
+        </div>
+
+        <!-- محتوى التبويبات -->
+        <div class="tabs-content">
+            <!-- لوحة التحكم الرئيسية -->
+            <div class="tab-pane active" id="dashboard">
+                <!-- بطاقات إحصائية -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card"><div class="stat-info"><h3>إجمالي الإيرادات</h3><div class="stat-number" id="totalRevenue">0</div></div><div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div></div>
+                    <div class="stat-card"><div class="stat-info"><h3>إجمالي المصروفات</h3><div class="stat-number" id="totalExpenses">0</div></div><div class="stat-icon"><i class="fas fa-receipt"></i></div></div>
+                    <div class="stat-card"><div class="stat-info"><h3>صافي الربح</h3><div class="stat-number" id="netProfit">0</div></div><div class="stat-icon"><i class="fas fa-chart-line"></i></div></div>
+                    <div class="stat-card"><div class="stat-info"><h3>عدد المرضى</h3><div class="stat-number" id="totalPatients">0</div></div><div class="stat-icon"><i class="fas fa-users"></i></div></div>
+                    <div class="stat-card"><div class="stat-info"><h3>المواعيد اليوم</h3><div class="stat-number" id="todayAppointments">0</div></div><div class="stat-icon"><i class="fas fa-calendar-day"></i></div></div>
+                    <div class="stat-card"><div class="stat-info"><h3>قيمة المخزون</h3><div class="stat-number" id="inventoryValue">0</div></div><div class="stat-icon"><i class="fas fa-boxes"></i></div></div>
+                </div>
+
+                <div class="dashboard-row">
+                    <div class="chart-panel">
+                        <div class="panel-title"><i class="fas fa-chart-line"></i> الإيرادات والمصروفات الشهرية</div>
+                        <canvas id="monthlyChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="chart-panel">
+                        <div class="panel-title"><i class="fas fa-chart-pie"></i> توزيع الإيرادات حسب القسم</div>
+                        <canvas id="revenueDistributionChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-row">
+                    <div class="transactions-panel">
+                        <div class="panel-title"><i class="fas fa-clock"></i> آخر المعاملات</div>
+                        <div class="transactions-table-wrapper">
+                            <table id="recentTransactionsTable">
+                                <thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الوصف</th><th>المريض</th></tr></thead>
+                                <tbody id="recentTransactionsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="chart-panel">
+                        <div class="panel-title"><i class="fas fa-calendar-alt"></i> المواعيد القادمة</div>
+                        <div id="upcomingAppointments"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب المعاملات المالية -->
+            <div class="tab-pane" id="transactions">
+                <div class="panel-title"><i class="fas fa-plus-circle"></i> إضافة معاملة جديدة</div>
+                <div class="invoice-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع المعاملة</label>
+                            <select id="transType">
+                                <option value="income">إيراد</option>
+                                <option value="expense">مصروف</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>المبلغ</label>
+                            <input type="number" id="amount" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>القسم</label>
+                            <select id="department">
+                                <option value="general">عام</option>
+                                <option value="clinic">عيادات</option>
+                                <option value="pharmacy">صيدلية</option>
+                                <option value="lab">مختبر</option>
+                                <option value="radiology">أشعة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الفئة</label>
+                            <select id="category">
+                                <option value="consultation">استشارة</option>
+                                <option value="treatment">علاج</option>
+                                <option value="medicines">أدوية</option>
+                                <option value="salary">رواتب</option>
+                                <option value="rent">إيجار</option>
+                                <option value="equipment">معدات</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الوصف</label>
+                            <input type="text" id="description" placeholder="وصف المعاملة">
+                        </div>
+                        <div class="form-group">
+                            <label>المريض/الجهة</label>
+                            <input type="text" id="patientName" placeholder="اختياري">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الفاتورة</label>
+                            <input type="text" id="invoiceNumber" placeholder="تلقائي">
+                        </div>
+                        <div class="form-group">
+                            <label>التاريخ</label>
+                            <input type="date" id="transDate">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn-primary" id="addTransactionBtn"><i class="fas fa-save"></i> إضافة</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر متقدمة -->
+                <div class="panel-title"><i class="fas fa-filter"></i> فلاتر متقدمة</div>
+                <div class="advanced-filters">
+                    <div class="filter-row">
+                        <select id="filterType">
+                            <option value="all">الكل</option>
+                            <option value="income">إيرادات</option>
+                            <option value="expense">مصروفات</option>
+                        </select>
+                        <select id="filterDepartment">
+                            <option value="all">كل الأقسام</option>
+                            <option value="general">عام</option>
+                            <option value="clinic">عيادات</option>
+                            <option value="pharmacy">صيدلية</option>
+                            <option value="lab">مختبر</option>
+                            <option value="radiology">أشعة</option>
+                        </select>
+                        <select id="filterCategory">
+                            <option value="all">كل الفئات</option>
+                            <option value="consultation">استشارة</option>
+                            <option value="treatment">علاج</option>
+                            <option value="medicines">أدوية</option>
+                            <option value="salary">رواتب</option>
+                            <option value="rent">إيجار</option>
+                        </select>
+                        <input type="text" id="searchText" placeholder="بحث بالوصف أو المريض">
+                        <input type="date" id="filterDateFrom" placeholder="من تاريخ">
+                        <input type="date" id="filterDateTo" placeholder="إلى تاريخ">
+                        <input type="number" id="filterAmountMin" placeholder="أقل مبلغ">
+                        <input type="number" id="filterAmountMax" placeholder="أعلى مبلغ">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn-secondary" id="applyFiltersBtn"><i class="fas fa-search"></i> تطبيق الفلاتر</button>
+                        <button class="btn-secondary" id="resetFiltersBtn"><i class="fas fa-undo-alt"></i> إعادة ضبط</button>
+                        <button class="btn-secondary" id="exportExcelBtn"><i class="fas fa-file-excel"></i> تصدير Excel</button>
+                        <button class="btn-secondary" id="printReportBtn"><i class="fas fa-print"></i> طباعة التقرير</button>
+                    </div>
+                </div>
+
+                <div class="transactions-table-wrapper">
+                    <table id="transactionsTable">
+                        <thead>
+                            <tr><th>#</th><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>القسم</th><th>الفئة</th><th>الوصف</th><th>المريض</th><th>رقم الفاتورة</th><th>إجراءات</th></tr>
+                        </thead>
+                        <tbody id="transactionsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- تبويب إدارة المرضى -->
+            <div class="tab-pane" id="patients">
+                <div class="panel-title"><i class="fas fa-user-plus"></i> إضافة مريض جديد</div>
+                <div class="patient-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>الاسم الكامل</label><input type="text" id="patientFullName" placeholder="الاسم"></div>
+                        <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="patientPhone" placeholder="رقم الهاتف"></div>
+                        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="patientEmail" placeholder="البريد الإلكتروني"></div>
+                        <div class="form-group"><label>تاريخ الميلاد</label><input type="date" id="patientBirthdate"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>العنوان</label><input type="text" id="patientAddress" placeholder="العنوان"></div>
+                        <div class="form-group"><label>فصيلة الدم</label><select id="patientBloodType"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+                        <div class="form-group"><label>الحالة الصحية</label><textarea id="patientMedicalHistory" rows="2" placeholder="الأمراض المزمنة - الحساسية"></textarea></div>
+                        <div class="form-group"><button class="btn-primary" id="addPatientBtn"><i class="fas fa-save"></i> إضافة مريض</button></div>
+                    </div>
+                </div>
+
+                <div class="panel-title"><i class="fas fa-search"></i> بحث عن مريض</div>
+                <div class="filter-bar">
+                    <input type="text" id="searchPatient" placeholder="بحث بالاسم أو رقم الهاتف">
+                    <button class="btn-secondary" id="searchPatientBtn"><i class="fas fa-search"></i> بحث</button>
+                </div>
+
+                <div class="transactions-table-wrapper">
+                    <table id="patientsTable">
+                        <thead><tr><th>الرقم</th><th>الاسم</th><th>الهاتف</th><th>البريد</th><th>آخر زيارة</th><th>إجمالي المدفوعات</th><th>إجراءات</th></tr></thead>
+                        <tbody id="patientsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- تبويب الأطباء والموظفين -->
+            <div class="tab-pane" id="doctors">
+                <div class="panel-title"><i class="fas fa-user-md"></i> إضافة طبيب/موظف</div>
+                <div class="staff-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>الاسم</label><input type="text" id="staffName"></div>
+                        <div class="form-group"><label>النوع</label><select id="staffType"><option value="doctor">طبيب</option><option value="nurse">ممرض</option><option value="admin">إداري</option><option value="technician">فني</option></select></div>
+                        <div class="form-group"><label>التخصص</label><input type="text" id="staffSpecialty" placeholder="التخصص"></div>
+                        <div class="form-group"><label>الراتب الشهري</label><input type="number" id="staffSalary" placeholder="الراتب"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>الهاتف</label><input type="text" id="staffPhone"></div>
+                        <div class="form-group"><label>البريد</label><input type="email" id="staffEmail"></div>
+                        <div class="form-group"><label>تاريخ التعيين</label><input type="date" id="staffHireDate"></div>
+                        <div class="form-group"><button class="btn-primary" id="addStaffBtn"><i class="fas fa-save"></i> إضافة</button></div>
+                    </div>
+                </div>
+                <div class="transactions-table-wrapper">
+                    <table id="staffTable">
+                        <thead><tr><th>الاسم</th><th>النوع</th><th>التخصص</th><th>الراتب</th><th>الهاتف</th><th>تاريخ التعيين</th><th>إجراءات</th></tr></thead>
+                        <tbody id="staffBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- تبويب المخزون -->
+            <div class="tab-pane" id="inventory">
+                <div class="panel-title"><i class="fas fa-box"></i> إضافة صنف جديد</div>
+                <div class="inventory-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>اسم الصنف</label><input type="text" id="itemName"></div>
+                        <div class="form-group"><label>الفئة</label><select id="itemCategory"><option>أدوية</option><option>مستهلكات</option><option>معدات</option><option>أدوات جراحية</option></select></div>
+                        <div class="form-group"><label>الكمية</label><input type="number" id="itemQuantity"></div>
+                        <div class="form-group"><label>سعر الشراء</label><input type="number" id="itemPurchasePrice"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>سعر البيع</label><input type="number" id="itemSellingPrice"></div>
+                        <div class="form-group"><label>تاريخ الانتهاء</label><input type="date" id="itemExpiryDate"></div>
+                        <div class="form-group"><label>الموقع</label><input type="text" id="itemLocation" placeholder="مكان التخزين"></div>
+                        <div class="form-group"><button class="btn-primary" id="addItemBtn"><i class="fas fa-save"></i> إضافة</button></div>
+                    </div>
+                </div>
+                <div class="transactions-table-wrapper">
+                    <table id="inventoryTable">
+                        <thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>تاريخ الانتهاء</th><th>القيمة الإجمالية</th><th>إجراءات</th></tr></thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- تبويب المواعيد -->
+            <div class="tab-pane" id="appointments">
+                <div class="panel-title"><i class="fas fa-calendar-plus"></i> حجز موعد جديد</div>
+                <div class="appointment-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>المريض</label><select id="appointmentPatient"></select></div>
+                        <div class="form-group"><label>الطبيب</label><select id="appointmentDoctor"></select></div>
+                        <div class="form-group"><label>التاريخ</label><input type="date" id="appointmentDate"></div>
+                        <div class="form-group"><label>الوقت</label><input type="time" id="appointmentTime"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>نوع الموعد</label><select id="appointmentType"><option>استشارة</option><option>متابعة</option><option>فحص</option><option>عملية</option></select></div>
+                        <div class="form-group"><label>الحالة</label><select id="appointmentStatus"><option>مؤكد</option><option>انتظار</option><option>مكتمل</option><option>ملغي</option></select></div>
+                        <div class="form-group"><label>ملاحظات</label><input type="text" id="appointmentNotes" placeholder="ملاحظات"></div>
+                        <div class="form-group"><button class="btn-primary" id="addAppointmentBtn"><i class="fas fa-save"></i> حجز</button></div>
+                    </div>
+                </div>
+                <div class="transactions-table-wrapper">
+                    <table id="appointmentsTable">
+                        <thead><tr><th>المريض</th><th>الطبيب</th><th>التاريخ</th><th>الوقت</th><th>النوع</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                        <tbody id="appointmentsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- تبويب التقارير المتقدمة -->
+            <div class="tab-pane" id="reports">
+                <div class="panel-title"><i class="fas fa-chart-bar"></i> تقارير مالية متقدمة</div>
+                <div class="reports-controls">
+                    <div class="form-row">
+                        <div class="form-group"><label>من تاريخ</label><input type="date" id="reportDateFrom"></div>
+                        <div class="form-group"><label>إلى تاريخ</label><input type="date" id="reportDateTo"></div>
+                        <div class="form-group"><label>نوع التقرير</label><select id="reportType"><option value="financial">تقرير مالي</option><option value="patients">تقرير المرضى</option><option value="doctors">تقرير الأطباء</option><option value="inventory">تقرير المخزون</option><option value="appointments">تقرير المواعيد</option></select></div>
+                        <div class="form-group"><button class="btn-primary" id="generateReportBtn"><i class="fas fa-chart-line"></i> إنشاء التقرير</button></div>
+                    </div>
+                </div>
+                <div id="reportContent" class="report-content"></div>
+            </div>
+
+            <!-- تبويب الإعدادات -->
+            <div class="tab-pane" id="settings">
+                <div class="panel-title"><i class="fas fa-database"></i> إدارة البيانات والنسخ الاحتياطي</div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-download"></i> تصدير نسخة احتياطية</h3>
+                        <p>حفظ جميع بيانات النظام في ملف JSON</p>
+                        <button class="btn-primary" id="backupExportBtn"><i class="fas fa-file-export"></i> تصدير النسخة</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-upload"></i> استعادة نسخة احتياطية</h3>
+                        <p>استعادة البيانات من ملف سابق</p>
+                        <input type="file" id="backupFileInput" accept=".json">
+                        <button class="btn-primary" id="backupImportBtn"><i class="fas fa-file-import"></i> استعادة</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-trash-alt"></i> إعادة تعيين النظام</h3>
+                        <p>حذف جميع البيانات والبدء من جديد</p>
+                        <button class="btn-danger" id="resetSystemBtn"><i class="fas fa-exclamation-triangle"></i> إعادة تعيين</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-clock"></i> آخر نسخ احتياطي</h3>
+                        <p id="lastBackupTime">لم يتم عمل نسخة احتياطية بعد</p>
+                    </div>
+                </div>
+                
+                <div class="panel-title" style="margin-top: 30px;"><i class="fas fa-building"></i> إعدادات المؤسسة</div>
+                <div class="settings-form">
+                    <div class="form-row">
+                        <div class="form-group"><label>اسم المؤسسة</label><input type="text" id="orgName" placeholder="اسم المؤسسة الطبية"></div>
+                        <div class="form-group"><label>السجل التجاري</label><input type="text" id="orgLicense" placeholder="رقم السجل"></div>
+                        <div class="form-group"><label>الهاتف</label><input type="text" id="orgPhone"></div>
+                        <div class="form-group"><label>البريد</label><input type="email" id="orgEmail"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>العنوان</label><input type="text" id="orgAddress" placeholder="العنوان الكامل"></div>
+                        <div class="form-group"><label>الشعار</label><input type="text" id="orgLogo" placeholder="رابط الشعار"></div>
+                        <div class="form-group"><button class="btn-primary" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ الإعدادات</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastMsg" class="toast-msg"></div>
+    <script src="script.js"></script>
+</body>
+</html>
