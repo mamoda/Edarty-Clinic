@@ -193,7 +193,6 @@ function restoreLoginSession() {
         };
         
         if (currentUser.loggedIn) {
-            // تحديث واجهة المستخدم
             const userNameSpan = document.getElementById("userName");
             const userRoleSpan = document.getElementById("userRole");
             const loginForm = document.getElementById("loginForm");
@@ -209,7 +208,6 @@ function restoreLoginSession() {
             if (loginForm) loginForm.style.display = "none";
             if (userInfo) userInfo.style.display = "flex";
             
-            // إخفاء طبقة التغطية وإظهار المحتوى
             if (appOverlay) appOverlay.classList.add("hidden");
             if (mainContent) mainContent.classList.add("visible");
             document.body.classList.remove("loading");
@@ -342,7 +340,6 @@ function applyPermissions() {
     const tabBtns = document.querySelectorAll(".tab-btn");
     const addButtons = document.querySelectorAll(".btn-primary");
     
-    // إظهار جميع الأزرار أولاً
     tabBtns.forEach(btn => {
         btn.disabled = false;
         btn.style.display = "flex";
@@ -352,7 +349,6 @@ function applyPermissions() {
         btn.style.display = "inline-flex";
     });
     
-    // تطبيق الصلاحيات على التبويبات
     if (permissions[0] !== "all") {
         tabBtns.forEach(btn => {
             const tabId = btn.dataset.tab;
@@ -362,7 +358,6 @@ function applyPermissions() {
         });
     }
     
-    // تعطيل أزرار معينة حسب الصلاحيات
     if (currentUser.role === "reception") {
         const addTransactionBtn = document.getElementById("addTransactionBtn");
         if (addTransactionBtn) addTransactionBtn.disabled = true;
@@ -452,13 +447,13 @@ function renderRecentTransactions() {
     tbody.innerHTML = recent
         .map(
             (t) => `
-                <tr>
-                    <td>${formatDate(t.date)}</td>
-                    <td><span class="${t.type === "income" ? "badge-income" : "badge-expense"}">${t.type === "income" ? "إيراد" : "مصروف"}</span></td>
-                    <td>${formatCurrency(t.amount)}</td>
-                    <td>${t.description}</td>
-                    <td>${t.patientName || "—"}</td>
-                </tr>
+                 <tr>
+                     <td>${formatDate(t.date)}</td>
+                     <td><span class="${t.type === "income" ? "badge-income" : "badge-expense"}">${t.type === "income" ? "إيراد" : "مصروف"}</span></td>
+                     <td>${formatCurrency(t.amount)}</td>
+                     <td>${t.description}</td>
+                     <td>${t.patientName || "—"}</td>
+                 </tr>
             `,
         )
         .join("");
@@ -549,12 +544,13 @@ function renderTransactionsTable() {
         filtered = filtered.filter(
             (t) =>
                 t.description.toLowerCase().includes(searchText) ||
-                (t.patientName && t.patientName.toLowerCase().includes(searchText)),
+                (t.patientName && t.patientName.toLowerCase().includes(searchText)) ||
+                (t.invoiceNumber && t.invoiceNumber.toLowerCase().includes(searchText))
         );
     if (dateFrom) filtered = filtered.filter((t) => t.date >= dateFrom);
     if (dateTo) filtered = filtered.filter((t) => t.date <= dateTo);
-    if (amountMin) filtered = filtered.filter((t) => t.amount >= amountMin);
-    if (amountMax) filtered = filtered.filter((t) => t.amount <= amountMax);
+    if (!isNaN(amountMin)) filtered = filtered.filter((t) => t.amount >= amountMin);
+    if (!isNaN(amountMax)) filtered = filtered.filter((t) => t.amount <= amountMax);
 
     filtered.sort((a, b) => b.date.localeCompare(a.date));
 
@@ -564,22 +560,22 @@ function renderTransactionsTable() {
     tbody.innerHTML = filtered
         .map(
             (t, idx) => `
-                <tr>
-                    <td>${idx + 1}</td>
-                    <td>${formatDate(t.date)}</td>
-                    <td><span class="${t.type === "income" ? "badge-income" : "badge-expense"}">${t.type === "income" ? "إيراد" : "مصروف"}</span></td>
-                    <td>${formatCurrency(t.amount)}</td>
-                    <td>${getDepartmentName(t.department)}</td>
-                    <td>${getCategoryName(t.category)}</td>
-                    <td>${t.description}</td>
-                    <td>${t.patientName || "—"}</td>
-                    <td>${t.invoiceNumber || "—"}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" onclick="editTransaction(${t.id})"></i>
-                        <i class="fas fa-trash-alt" onclick="deleteTransaction(${t.id})"></i>
-                        <i class="fas fa-print" onclick="printTransaction(${t.id})"></i>
-                    </td>
-                </tr>
+                 <tr>
+                     <td>${idx + 1}</td>
+                     <td>${formatDate(t.date)}</td>
+                     <td><span class="${t.type === "income" ? "badge-income" : "badge-expense"}">${t.type === "income" ? "إيراد" : "مصروف"}</span></td>
+                     <td>${formatCurrency(t.amount)}</td>
+                     <td>${getDepartmentName(t.department)}</td>
+                     <td>${getCategoryName(t.category)}</td>
+                     <td>${t.description}</td>
+                     <td>${t.patientName || "—"}</td>
+                     <td>${t.invoiceNumber || "—"}</td>
+                     <td class="action-icons">
+                         <i class="fas fa-edit" onclick="editTransaction(${t.id})"></i>
+                         <i class="fas fa-trash-alt" onclick="deleteTransaction(${t.id})"></i>
+                         <i class="fas fa-print" onclick="printTransaction(${t.id})"></i>
+                     </td>
+                 </tr>
             `,
         )
         .join("");
@@ -691,39 +687,70 @@ function printTransaction(id) {
         <head>
             <title>فاتورة ${trans.invoiceNumber}</title>
             <style>
-                body { font-family: 'Cairo', sans-serif; padding: 20px; }
-                .invoice { max-width: 800px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; }
-                .header { text-align: center; margin-bottom: 30px; }
-                .details { margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-                .total { font-size: 18px; font-weight: bold; margin-top: 20px; }
+                body { font-family: 'Cairo', 'Tahoma', sans-serif; padding: 20px; margin: 0; background: #f5f5f5; }
+                .invoice { max-width: 800px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+                .invoice-header { background: linear-gradient(135deg, #2a6f97, #1e4a6e); color: white; padding: 30px; text-align: center; }
+                .invoice-header h2 { margin: 0 0 10px 0; font-size: 28px; }
+                .invoice-header h3 { margin: 0; font-size: 20px; opacity: 0.9; }
+                .invoice-body { padding: 30px; }
+                .invoice-details { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+                .detail-item { text-align: right; }
+                .detail-item strong { display: block; color: #2a6f97; margin-bottom: 5px; }
+                .detail-item span { font-size: 16px; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
+                th { background: #2a6f97; color: white; font-weight: 600; }
+                .total { font-size: 22px; font-weight: bold; margin-top: 20px; text-align: left; color: #2a6f97; }
+                .footer { text-align: center; padding: 20px; background: #f8f9fa; font-size: 12px; color: #666; }
+                @media print {
+                    body { background: white; padding: 0; }
+                    .invoice { box-shadow: none; margin: 0; }
+                    .no-print { display: none; }
+                }
             </style>
         </head>
         <body>
             <div class="invoice">
-                <div class="header">
+                <div class="invoice-header">
                     <h2>${appData.settings.orgName}</h2>
                     <h3>فاتورة ضريبية</h3>
                 </div>
-                <div class="details">
-                    <p><strong>رقم الفاتورة:</strong> ${trans.invoiceNumber}</p>
-                    <p><strong>التاريخ:</strong> ${formatDate(trans.date)}</p>
-                    <p><strong>المريض:</strong> ${trans.patientName || "غير محدد"}</p>
+                <div class="invoice-body">
+                    <div class="invoice-details">
+                        <div class="detail-item">
+                            <strong>رقم الفاتورة:</strong>
+                            <span>${trans.invoiceNumber}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>التاريخ:</strong>
+                            <span>${formatDate(trans.date)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>المريض:</strong>
+                            <span>${trans.patientName || "غير محدد"}</span>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                             <tr><th>البيان</th><th>القيمة</th></tr>
+                        </thead>
+                        <tbody>
+                             <tr><td>${trans.description}</td><td>${formatCurrency(trans.amount)}</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="total">
+                        الإجمالي: ${formatCurrency(trans.amount)}
+                    </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr><th>البيان</th><th>القيمة</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>${trans.description}</td><td>${formatCurrency(trans.amount)}</td></tr>
-                    </tbody>
-                </table>
-                <div class="total">
-                    <p>الإجمالي: ${formatCurrency(trans.amount)}</p>
+                <div class="footer">
+                    شكراً لثقتكم بنا | هذه فاتورة صالحة قانونياً
                 </div>
             </div>
-            <script>window.print();setTimeout(()=>window.close(),1000);<\/script>
+            <div class="no-print" style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="padding:10px 30px; background:#2a6f97; color:white; border:none; border-radius:5px; cursor:pointer;">طباعة</button>
+                <button onclick="window.close()" style="padding:10px 30px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">إغلاق</button>
+            </div>
+            <script>setTimeout(() => { if(window.matchMedia('print').matches) { window.print(); setTimeout(() => window.close(), 1000); } }, 500);<\/script>
         </body>
         </html>
     `);
@@ -734,12 +761,17 @@ function printTransaction(id) {
 function renderPatientsTable() {
     if (!currentUser.loggedIn) return;
     
-    const search = document.getElementById("searchPatient")?.value.toLowerCase();
+    const searchInput = document.getElementById("searchPatient");
+    let search = searchInput?.value.toLowerCase() || "";
     let patients = [...appData.patients];
-    if (search)
+    
+    if (search) {
         patients = patients.filter(
-            (p) => p.name.toLowerCase().includes(search) || p.phone.includes(search),
+            (p) => p.name.toLowerCase().includes(search) || 
+                    p.phone.includes(search) || 
+                    (p.email && p.email.toLowerCase().includes(search))
         );
+    }
 
     const tbody = document.getElementById("patientsBody");
     if (!tbody) return;
@@ -747,22 +779,127 @@ function renderPatientsTable() {
     tbody.innerHTML = patients
         .map(
             (p) => `
-                <tr>
-                    <td>${p.id}</td>
-                    <td>${p.name}</td>
-                    <td>${p.phone}</td>
-                    <td>${p.email}</td>
-                    <td>${formatDate(p.lastVisit)}</td>
-                    <td>${formatCurrency(p.totalPaid)}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" onclick="editPatient(${p.id})"></i>
-                        <i class="fas fa-trash-alt" onclick="deletePatient(${p.id})"></i>
-                        <i class="fas fa-file-medical" onclick="viewPatientHistory(${p.id})"></i>
-                    </td>
-                </tr>
+                 <tr>
+                     <td>${p.id}</td>
+                     <td>${p.name}</td>
+                     <td>${p.phone}</td>
+                     <td>${p.email}</td>
+                     <td>${formatDate(p.lastVisit)}</td>
+                     <td>${formatCurrency(p.totalPaid)}</td>
+                     <td class="action-icons">
+                         <i class="fas fa-edit" onclick="editPatient(${p.id})"></i>
+                         <i class="fas fa-trash-alt" onclick="deletePatient(${p.id})"></i>
+                         <i class="fas fa-file-medical" onclick="viewPatientHistory(${p.id})"></i>
+                         <i class="fas fa-print" onclick="printPatientCard(${p.id})"></i>
+                     </td>
+                 </tr>
             `,
         )
         .join("");
+}
+
+function printPatientCard(id) {
+    const patient = appData.patients.find((p) => p.id === id);
+    if (!patient) return;
+    
+    const patientTransactions = appData.transactions.filter(t => t.patientName === patient.name);
+    const totalTransactions = patientTransactions.length;
+    const lastTransaction = patientTransactions.sort((a,b) => b.date.localeCompare(a.date))[0];
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>بطاقة مريض - ${patient.name}</title>
+            <style>
+                body { font-family: 'Cairo', 'Tahoma', sans-serif; padding: 20px; background: #f5f5f5; }
+                .card { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+                .card-header { background: linear-gradient(135deg, #2a6f97, #1e4a6e); color: white; padding: 30px; text-align: center; }
+                .card-header h2 { margin: 0 0 5px; font-size: 24px; }
+                .card-header p { margin: 0; opacity: 0.9; }
+                .card-body { padding: 30px; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #eee; }
+                .info-label { font-weight: bold; color: #2a6f97; }
+                .info-value { color: #333; }
+                .medical-history { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 20px; }
+                .stats { display: flex; justify-content: space-around; margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 10px; }
+                .stat-item { text-align: center; }
+                .stat-value { font-size: 24px; font-weight: bold; color: #2a6f97; }
+                .stat-label { font-size: 12px; color: #666; }
+                .footer { text-align: center; padding: 20px; background: #f8f9fa; font-size: 12px; color: #666; }
+                @media print {
+                    body { background: white; padding: 0; }
+                    .card { box-shadow: none; margin: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="card-header">
+                    <h2>${appData.settings.orgName}</h2>
+                    <p>بطاقة تعريف مريض</p>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="info-label">الاسم الكامل:</span>
+                        <span class="info-value">${patient.name}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">رقم الهاتف:</span>
+                        <span class="info-value">${patient.phone}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">البريد الإلكتروني:</span>
+                        <span class="info-value">${patient.email || "غير محدد"}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">تاريخ الميلاد:</span>
+                        <span class="info-value">${formatDate(patient.birthdate) || "غير محدد"}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">فصيلة الدم:</span>
+                        <span class="info-value">${patient.bloodType || "غير محدد"}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">آخر زيارة:</span>
+                        <span class="info-value">${formatDate(patient.lastVisit)}</span>
+                    </div>
+                    ${patient.medicalHistory ? `
+                    <div class="medical-history">
+                        <strong>التاريخ الطبي:</strong><br>
+                        ${patient.medicalHistory}
+                    </div>
+                    ` : ''}
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${formatCurrency(patient.totalPaid)}</div>
+                            <div class="stat-label">إجمالي المدفوعات</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totalTransactions}</div>
+                            <div class="stat-label">عدد المعاملات</div>
+                        </div>
+                        ${lastTransaction ? `
+                        <div class="stat-item">
+                            <div class="stat-value">${formatDate(lastTransaction.date)}</div>
+                            <div class="stat-label">آخر معاملة</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="footer">
+                    ${appData.settings.orgPhone ? `هاتف: ${appData.settings.orgPhone} | ` : ''}${appData.settings.orgEmail ? `بريد: ${appData.settings.orgEmail}` : ''}
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="padding:10px 30px; background:#2a6f97; color:white; border:none; border-radius:5px; cursor:pointer;">طباعة البطاقة</button>
+                <button onclick="window.close()" style="padding:10px 30px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">إغلاق</button>
+            </div>
+            <script>setTimeout(() => { if(window.matchMedia('print').matches) { window.print(); setTimeout(() => window.close(), 1000); } }, 500);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function addPatient() {
@@ -836,8 +973,60 @@ function viewPatientHistory(id) {
     if (!patient) return;
     
     const patientTransactions = appData.transactions.filter(t => t.patientName === patient.name);
+    const transactionsList = patientTransactions.map(t => 
+        `${formatDate(t.date)} - ${t.type === 'income' ? 'دفع' : 'مصروف'}: ${formatCurrency(t.amount)} - ${t.description}`
+    ).join('\n');
     
-    alert(`الملف الطبي للمريض: ${patient.name}\n\nالتاريخ الطبي: ${patient.medicalHistory || "لا يوجد"}\nفصيلة الدم: ${patient.bloodType}\nآخر زيارة: ${formatDate(patient.lastVisit)}\nإجمالي المدفوعات: ${formatCurrency(patient.totalPaid)}\n\nعدد المعاملات المالية: ${patientTransactions.length}`);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>التاريخ الطبي - ${patient.name}</title>
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                .report { max-width: 800px; margin: 0 auto; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .info { background: #f5f5f5; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                th { background: #2a6f97; color: white; }
+            </style>
+        </head>
+        <body>
+            <div class="report">
+                <div class="header">
+                    <h2>${appData.settings.orgName}</h2>
+                    <h3>التاريخ الطبي للمريض</h3>
+                </div>
+                <div class="info">
+                    <p><strong>الاسم:</strong> ${patient.name}</p>
+                    <p><strong>رقم الهاتف:</strong> ${patient.phone}</p>
+                    <p><strong>فصيلة الدم:</strong> ${patient.bloodType || "غير محدد"}</p>
+                    <p><strong>التاريخ الطبي:</strong> ${patient.medicalHistory || "لا يوجد"}</p>
+                    <p><strong>إجمالي المدفوعات:</strong> ${formatCurrency(patient.totalPaid)}</p>
+                </div>
+                <h4>المعاملات المالية:</h4>
+                <table>
+                    <thead>
+                        <tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>البيان</th></tr>
+                    </thead>
+                    <tbody>
+                        ${patientTransactions.map(t => `
+                        <tr>
+                            <td>${formatDate(t.date)}</td>
+                            <td>${t.type === 'income' ? 'دفع' : 'مصروف'}</td>
+                            <td>${formatCurrency(t.amount)}</td>
+                            <td>${t.description}</td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <script>window.print();setTimeout(()=>window.close(),1000);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 // ==================== إدارة الأطباء والموظفين ====================
@@ -850,21 +1039,60 @@ function renderStaffTable() {
     tbody.innerHTML = appData.staff
         .map(
             (s) => `
-                <tr>
-                    <td>${s.name}</td>
-                    <td>${s.type === "doctor" ? "طبيب" : s.type === "nurse" ? "ممرض" : s.type === "admin" ? "إداري" : "فني"}</td>
-                    <td>${s.specialty || "—"}</td>
-                    <td>${formatCurrency(s.salary)}</td>
-                    <td>${s.phone}</td>
-                    <td>${formatDate(s.hireDate)}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" onclick="editStaff(${s.id})"></i>
-                        <i class="fas fa-trash-alt" onclick="deleteStaff(${s.id})"></i>
-                    </td>
-                </tr>
+                 践
+                     <td>${s.name}践
+                     <td>${s.type === "doctor" ? "طبيب" : s.type === "nurse" ? "ممرض" : s.type === "admin" ? "إداري" : "فني"}践
+                     <td>${s.specialty || "—"}践
+                     <td>${formatCurrency(s.salary)}践
+                     <td>${s.phone}践
+                     <td>${formatDate(s.hireDate)}践
+                     <td class="action-icons">
+                         <i class="fas fa-edit" onclick="editStaff(${s.id})"></i>
+                         <i class="fas fa-trash-alt" onclick="deleteStaff(${s.id})"></i>
+                         <i class="fas fa-print" onclick="printStaffCard(${s.id})"></i>
+                     践
+                  </tr>
             `,
         )
         .join("");
+}
+
+function printStaffCard(id) {
+    const staff = appData.staff.find((s) => s.id === id);
+    if (!staff) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>بطاقة موظف - ${staff.name}</title>
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                .card { max-width: 500px; margin: 0 auto; border: 2px solid #2a6f97; border-radius: 15px; padding: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #2a6f97; padding-bottom: 15px; margin-bottom: 20px; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 5px; }
+                .label { font-weight: bold; color: #2a6f97; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="header">
+                    <h2>${appData.settings.orgName}</h2>
+                    <h3>بطاقة تعريف موظف</h3>
+                </div>
+                <div class="info-row"><span class="label">الاسم:</span><span>${staff.name}</span></div>
+                <div class="info-row"><span class="label">الوظيفة:</span><span>${staff.type === "doctor" ? "طبيب" : staff.type === "nurse" ? "ممرض" : staff.type === "admin" ? "إداري" : "فني"}</span></div>
+                ${staff.specialty ? `<div class="info-row"><span class="label">التخصص:</span><span>${staff.specialty}</span></div>` : ''}
+                <div class="info-row"><span class="label">الراتب:</span><span>${formatCurrency(staff.salary)}</span></div>
+                <div class="info-row"><span class="label">الهاتف:</span><span>${staff.phone}</span></div>
+                ${staff.email ? `<div class="info-row"><span class="label">البريد:</span><span>${staff.email}</span></div>` : ''}
+                <div class="info-row"><span class="label">تاريخ التعيين:</span><span>${formatDate(staff.hireDate)}</span></div>
+            </div>
+            <script>window.print();setTimeout(()=>window.close(),1000);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function addStaff() {
@@ -937,22 +1165,55 @@ function renderInventoryTable() {
     tbody.innerHTML = appData.inventory
         .map(
             (i) => `
-                <tr>
-                    <td>${i.name}</td>
-                    <td>${i.category}</td>
-                    <td>${i.quantity}</td>
-                    <td>${formatCurrency(i.purchasePrice)}</td>
-                    <td>${formatCurrency(i.sellingPrice)}</td>
-                    <td>${formatDate(i.expiryDate)}</td>
-                    <td>${formatCurrency(i.quantity * i.purchasePrice)}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" onclick="editItem(${i.id})"></i>
-                        <i class="fas fa-trash-alt" onclick="deleteItem(${i.id})"></i>
-                    </td>
-                </tr>
+                 践
+                     <td>${i.name}践
+                     <td>${i.category}践
+                     <td>${i.quantity}践
+                     <td>${formatCurrency(i.purchasePrice)}践
+                     <td>${formatCurrency(i.sellingPrice)}践
+                     <td>${formatDate(i.expiryDate)}践
+                     <td>${formatCurrency(i.quantity * i.purchasePrice)}践
+                     <td class="action-icons">
+                         <i class="fas fa-edit" onclick="editItem(${i.id})"></i>
+                         <i class="fas fa-trash-alt" onclick="deleteItem(${i.id})"></i>
+                         <i class="fas fa-print" onclick="printItemLabel(${i.id})"></i>
+                     践
+                  </tr>
             `,
         )
         .join("");
+}
+
+function printItemLabel(id) {
+    const item = appData.inventory.find((i) => i.id === id);
+    if (!item) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>ملصق صنف - ${item.name}</title>
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                .label { max-width: 300px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; padding: 15px; text-align: center; }
+                .name { font-size: 18px; font-weight: bold; color: #2a6f97; margin-bottom: 10px; }
+                .price { font-size: 16px; color: #e67e22; margin: 5px 0; }
+                .expiry { font-size: 12px; color: #666; margin-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="label">
+                <div class="name">${item.name}</div>
+                <div class="price">سعر البيع: ${formatCurrency(item.sellingPrice)}</div>
+                <div class="price">سعر الشراء: ${formatCurrency(item.purchasePrice)}</div>
+                <div class="expiry">تاريخ الانتهاء: ${formatDate(item.expiryDate) || "غير محدد"}</div>
+                <div class="expiry">الكمية: ${item.quantity}</div>
+            </div>
+            <script>window.print();setTimeout(()=>window.close(),1000);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function addInventoryItem() {
@@ -1025,21 +1286,73 @@ function renderAppointmentsTable() {
     tbody.innerHTML = appData.appointments
         .map(
             (a) => `
-                <tr>
-                    <td>${a.patientName}</td>
-                    <td>${a.doctorName}</td>
-                    <td>${formatDate(a.date)}</td>
-                    <td>${a.time}</td>
-                    <td>${a.type}</td>
-                    <td><span class="${a.status === "مؤكد" ? "badge-income" : "badge-expense"}">${a.status}</span></td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" onclick="editAppointment(${a.id})"></i>
-                        <i class="fas fa-trash-alt" onclick="deleteAppointment(${a.id})"></i>
-                     </td>
-                 </tr>
+                 践
+                     <td>${a.patientName}践
+                     <td>${a.doctorName}践
+                     <td>${formatDate(a.date)}践
+                     <td>${a.time}践
+                     <td>${a.type}践
+                     <td><span class="${a.status === "مؤكد" ? "badge-income" : "badge-expense"}">${a.status}</span>践
+                     <td class="action-icons">
+                         <i class="fas fa-edit" onclick="editAppointment(${a.id})"></i>
+                         <i class="fas fa-trash-alt" onclick="deleteAppointment(${a.id})"></i>
+                         <i class="fas fa-print" onclick="printAppointmentCard(${a.id})"></i>
+                     践
+                  </tr>
             `,
         )
         .join("");
+}
+
+function printAppointmentCard(id) {
+    const appointment = appData.appointments.find((a) => a.id === id);
+    if (!appointment) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>تذكرة موعد - ${appointment.patientName}</title>
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                .card { max-width: 400px; margin: 0 auto; border: 2px dashed #2a6f97; border-radius: 15px; padding: 20px; text-align: center; }
+                .header { border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px; }
+                .datetime { font-size: 20px; font-weight: bold; color: #2a6f97; margin: 15px 0; }
+                .patient { font-size: 18px; margin: 10px 0; }
+                .doctor { color: #666; margin: 10px 0; }
+                .status { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 15px; }
+                .status-confirmed { background: #27ae60; color: white; }
+                .status-pending { background: #f39c12; color: white; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="header">
+                    <h2>${appData.settings.orgName}</h2>
+                    <p>تذكرة موعد</p>
+                </div>
+                <div class="datetime">
+                    ${formatDate(appointment.date)} - ${appointment.time}
+                </div>
+                <div class="patient">
+                    <strong>المريض:</strong> ${appointment.patientName}
+                </div>
+                <div class="doctor">
+                    <strong>الطبيب:</strong> ${appointment.doctorName}
+                </div>
+                <div class="doctor">
+                    <strong>نوع الموعد:</strong> ${appointment.type}
+                </div>
+                <div class="status status-${appointment.status === 'مؤكد' ? 'confirmed' : 'pending'}">
+                    ${appointment.status}
+                </div>
+                ${appointment.notes ? `<div class="doctor"><strong>ملاحظات:</strong> ${appointment.notes}</div>` : ''}
+            </div>
+            <script>window.print();setTimeout(()=>window.close(),1000);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function updateUpcomingAppointments() {
@@ -1265,7 +1578,7 @@ function generateReport() {
                 `,
                 )
                 .join("")}</tbody>
-        </table>`;
+         </table>`;
     } else if (reportType === "patients") {
         html += `<table border="1" style="width:100%; border-collapse:collapse;">
             <thead>
@@ -1284,7 +1597,7 @@ function generateReport() {
                 `,
                 )
                 .join("")}</tbody>
-        </table>`;
+         </table>`;
     } else if (reportType === "doctors") {
         html += `<table border="1" style="width:100%; border-collapse:collapse;">
             <thead>
@@ -1304,28 +1617,28 @@ function generateReport() {
                 `,
                 )
                 .join("")}</tbody>
-        </table>`;
+         </table>`;
     } else if (reportType === "inventory") {
         html += `<table border="1" style="width:100%; border-collapse:collapse;">
             <thead>
-                <tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>تاريخ الانتهاء</th><th>القيمة</th></tr>
-            </thead>
+                <tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>تاريخ الانتهاء</th><th>القيمة</th>
+                            </thead>
             <tbody>${appData.inventory
                 .map(
                     (i) => `
                     <tr>
-                        <td>${i.name}</td>
-                        <td>${i.category}</td>
-                        <td>${i.quantity}</td>
-                        <td>${formatCurrency(i.purchasePrice)}</td>
-                        <td>${formatCurrency(i.sellingPrice)}</td>
-                        <td>${formatDate(i.expiryDate)}</td>
-                        <td>${formatCurrency(i.quantity * i.purchasePrice)}</td>
+                        <td>${i.name}践
+                        <td>${i.category}践
+                        <td>${i.quantity}践
+                        <td>${formatCurrency(i.purchasePrice)}践
+                        <td>${formatCurrency(i.sellingPrice)}践
+                        <td>${formatDate(i.expiryDate)}践
+                        <td>${formatCurrency(i.quantity * i.purchasePrice)}践
                     </tr>
                 `,
                 )
                 .join("")}</tbody>
-        </table>`;
+         </table>`;
     } else if (reportType === "appointments") {
         html += `<table border="1" style="width:100%; border-collapse:collapse;">
             <thead>
@@ -1334,22 +1647,72 @@ function generateReport() {
             <tbody>${appData.appointments
                 .map(
                     (a) => `
-                    <tr>
-                        <td>${a.patientName}</td>
-                        <td>${a.doctorName}</td>
-                        <td>${formatDate(a.date)}</td>
-                        <td>${a.time}</td>
-                        <td>${a.type}</td>
-                        <td>${a.status}</td>
-                    </tr>
+                     <tr>
+                         <td>${a.patientName}</td>
+                         <td>${a.doctorName}</td>
+                         <td>${formatDate(a.date)}</td>
+                         <td>${a.time}</td>
+                         <td>${a.type}</td>
+                         <td>${a.status}</td>
+                     </tr>
                 `,
                 )
                 .join("")}</tbody>
-        </table>`;
+         </table>`;
     }
 
     container.innerHTML = html;
+    
+    // Add print button to report
+    const printBtn = document.createElement('button');
+    printBtn.innerHTML = '<i class="fas fa-print"></i> طباعة التقرير';
+    printBtn.style.cssText = 'margin-top: 20px; padding: 10px 20px; background: #2a6f97; color: white; border: none; border-radius: 5px; cursor: pointer;';
+    printBtn.onclick = () => printReport();
+    container.appendChild(printBtn);
+    
     showToast("تم إنشاء التقرير", "success");
+}
+
+function printReport() {
+    const reportContent = document.getElementById("reportContent");
+    if (!reportContent) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>تقرير - ${appData.settings.orgName}</title>
+            <style>
+                body { font-family: 'Cairo', 'Tahoma', sans-serif; padding: 20px; margin: 0; background: white; }
+                .report-container { max-width: 1200px; margin: 0 auto; }
+                .report-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2a6f97; }
+                .report-header h2 { color: #2a6f97; margin: 0 0 10px 0; }
+                .report-header h3 { margin: 0 0 10px 0; }
+                .report-summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+                .summary-item { text-align: center; }
+                .summary-item strong { font-size: 24px; color: #2a6f97; display: block; margin-bottom: 5px; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+                th { background: #2a6f97; color: white; }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="report-container">
+                ${reportContent.cloneNode(true).innerHTML}
+            </div>
+            <div class="no-print" style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="padding:10px 30px; background:#2a6f97; color:white; border:none; border-radius:5px; cursor:pointer;">طباعة التقرير</button>
+                <button onclick="window.close()" style="padding:10px 30px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">إغلاق</button>
+            </div>
+            <script>setTimeout(() => { if(window.matchMedia('print').matches) { window.print(); setTimeout(() => window.close(), 1000); } }, 500);<\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function getReportTitle(type) {
@@ -1384,6 +1747,244 @@ function exportToExcel() {
         `edarty_report_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
     showToast("تم تصدير التقرير", "success");
+}
+
+// ==================== فلترة متقدمة للمعاملات ====================
+function resetTransactionFilters() {
+    const filterInputs = document.querySelectorAll("#transactions .filter-row input, #transactions .filter-row select");
+    filterInputs.forEach((el) => {
+        if (el) el.value = "";
+    });
+    renderTransactionsTable();
+    showToast("تم إعادة تعيين الفلاتر", "success");
+}
+
+function applyTransactionFilters() {
+    renderTransactionsTable();
+    showToast("تم تطبيق الفلاتر", "success");
+}
+
+// ==================== بحث متقدم ====================
+function initAdvancedSearch() {
+    const globalSearchInput = document.getElementById("globalSearch");
+    const globalSearchBtn = document.getElementById("globalSearchBtn");
+    
+    if (globalSearchBtn && globalSearchInput) {
+        globalSearchBtn.addEventListener("click", () => {
+            performGlobalSearch(globalSearchInput.value);
+        });
+        
+        globalSearchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                performGlobalSearch(globalSearchInput.value);
+            }
+        });
+    }
+}
+
+function performGlobalSearch(searchTerm) {
+    if (!searchTerm || searchTerm.trim() === "") {
+        showToast("الرجاء إدخال نص للبحث", "info");
+        return;
+    }
+    
+    const term = searchTerm.toLowerCase().trim();
+    const results = {
+        transactions: [],
+        patients: [],
+        staff: [],
+        inventory: [],
+        appointments: []
+    };
+    
+    // Search in transactions
+    results.transactions = appData.transactions.filter(t => 
+        t.description.toLowerCase().includes(term) ||
+        (t.patientName && t.patientName.toLowerCase().includes(term)) ||
+        (t.invoiceNumber && t.invoiceNumber.toLowerCase().includes(term)) ||
+        t.amount.toString().includes(term)
+    );
+    
+    // Search in patients
+    results.patients = appData.patients.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.phone.includes(term) ||
+        (p.email && p.email.toLowerCase().includes(term))
+    );
+    
+    // Search in staff
+    results.staff = appData.staff.filter(s =>
+        s.name.toLowerCase().includes(term) ||
+        (s.specialty && s.specialty.toLowerCase().includes(term)) ||
+        s.phone.includes(term)
+    );
+    
+    // Search in inventory
+    results.inventory = appData.inventory.filter(i =>
+        i.name.toLowerCase().includes(term) ||
+        i.category.toLowerCase().includes(term)
+    );
+    
+    // Search in appointments
+    results.appointments = appData.appointments.filter(a =>
+        a.patientName.toLowerCase().includes(term) ||
+        a.doctorName.toLowerCase().includes(term) ||
+        a.type.toLowerCase().includes(term)
+    );
+    
+    displaySearchResults(results, term);
+}
+
+function displaySearchResults(results, term) {
+    const resultsModal = document.createElement('div');
+    resultsModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        direction: rtl;
+    `;
+    
+    const totalResults = results.transactions.length + results.patients.length + results.staff.length + results.inventory.length + results.appointments.length;
+    
+    resultsModal.innerHTML = `
+        <div style="background: white; border-radius: 20px; width: 90%; max-width: 1000px; max-height: 80vh; overflow: auto; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a6f97; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #2a6f97;">نتائج البحث عن: "${term}"</h3>
+                <span style="background: #2a6f97; color: white; padding: 5px 10px; border-radius: 20px;">${totalResults} نتيجة</span>
+                <button onclick="this.closest('div').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            
+            ${results.transactions.length > 0 ? `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #2a6f97; margin-bottom: 10px;">📊 المعاملات المالية (${results.transactions.length})</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الوصف</th><th>رقم الفاتورة</th></tr>
+                    </thead>
+                    <tbody>
+                        ${results.transactions.map(t => `
+                            <tr>
+                                <td>${formatDate(t.date)}</td>
+                                <td><span style="color: ${t.type === 'income' ? '#27ae60' : '#e74c3c'}">${t.type === 'income' ? 'إيراد' : 'مصروف'}</span></td>
+                                <td>${formatCurrency(t.amount)}</td>
+                                <td>${t.description}</td>
+                                <td>${t.invoiceNumber || '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${results.patients.length > 0 ? `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #2a6f97; margin-bottom: 10px;">👥 المرضى (${results.patients.length})</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr><th>الاسم</th><th>الهاتف</th><th>البريد</th><th>آخر زيارة</th></tr>
+                    </thead>
+                    <tbody>
+                        ${results.patients.map(p => `
+                            <tr>
+                                <td>${p.name}</td>
+                                <td>${p.phone}</td>
+                                <td>${p.email || '—'}</td>
+                                <td>${formatDate(p.lastVisit)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${results.staff.length > 0 ? `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #2a6f97; margin-bottom: 10px;">👨‍⚕️ الموظفين (${results.staff.length})</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr><th>الاسم</th><th>الوظيفة</th><th>التخصص</th><th>الهاتف</th></tr>
+                    </thead>
+                    <tbody>
+                        ${results.staff.map(s => `
+                            <tr>
+                                <td>${s.name}</td>
+                                <td>${s.type === 'doctor' ? 'طبيب' : s.type === 'nurse' ? 'ممرض' : 'موظف'}</td>
+                                <td>${s.specialty || '—'}</td>
+                                <td>${s.phone}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${results.inventory.length > 0 ? `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #2a6f97; margin-bottom: 10px;">📦 المخزون (${results.inventory.length})</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>سعر البيع</th></tr>
+                    </thead>
+                    <tbody>
+                        ${results.inventory.map(i => `
+                            <tr>
+                                <td>${i.name}</td>
+                                <td>${i.category}</td>
+                                <td>${i.quantity}</td>
+                                <td>${formatCurrency(i.sellingPrice)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${results.appointments.length > 0 ? `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #2a6f97; margin-bottom: 10px;">📅 المواعيد (${results.appointments.length})</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr><th>المريض</th><th>الطبيب</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th></tr>
+                    </thead>
+                    <tbody>
+                        ${results.appointments.map(a => `
+                            <tr>
+                                <td>${a.patientName}</td>
+                                <td>${a.doctorName}</td>
+                                <td>${formatDate(a.date)}</td>
+                                <td>${a.time}</td>
+                                <td><span style="color: ${a.status === 'مؤكد' ? '#27ae60' : '#e67e22'}">${a.status}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${totalResults === 0 ? `
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px;"></i>
+                <p>لم يتم العثور على نتائج للبحث عن "${term}"</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.body.appendChild(resultsModal);
+    
+    // Close modal when clicking outside
+    resultsModal.addEventListener('click', (e) => {
+        if (e.target === resultsModal) {
+            resultsModal.remove();
+        }
+    });
 }
 
 // ==================== تهيئة الصفحة ====================
@@ -1456,16 +2057,8 @@ function initEventListeners() {
     const applyFiltersBtn = document.getElementById("applyFiltersBtn");
     const resetFiltersBtn = document.getElementById("resetFiltersBtn");
     
-    if (applyFiltersBtn) applyFiltersBtn.addEventListener("click", renderTransactionsTable);
-    if (resetFiltersBtn) {
-        resetFiltersBtn.addEventListener("click", () => {
-            const filterInputs = document.querySelectorAll("#transactions .filter-row input, #transactions .filter-row select");
-            filterInputs.forEach((el) => {
-                if (el) el.value = "";
-            });
-            renderTransactionsTable();
-        });
-    }
+    if (applyFiltersBtn) applyFiltersBtn.addEventListener("click", applyTransactionFilters);
+    if (resetFiltersBtn) resetFiltersBtn.addEventListener("click", resetTransactionFilters);
 
     // التقارير والتصدير
     const exportExcelBtn = document.getElementById("exportExcelBtn");
@@ -1494,16 +2087,47 @@ function initEventListeners() {
     if (resetSystemBtn) resetSystemBtn.addEventListener("click", resetSystem);
     if (saveSettingsBtn) saveSettingsBtn.addEventListener("click", saveSettings);
 
-    // البحث
+    // البحث في المرضى
     const searchPatientBtn = document.getElementById("searchPatientBtn");
     const searchPatientInput = document.getElementById("searchPatient");
     
     if (searchPatientBtn) searchPatientBtn.addEventListener("click", renderPatientsTable);
     if (searchPatientInput) searchPatientInput.addEventListener("input", renderPatientsTable);
 
+    // البحث في المعاملات
+    const searchTextInput = document.getElementById("searchText");
+    if (searchTextInput) {
+        searchTextInput.addEventListener("input", () => {
+            renderTransactionsTable();
+        });
+    }
+    
+    // فلاتر التاريخ والمبلغ
+    const filterDateFrom = document.getElementById("filterDateFrom");
+    const filterDateTo = document.getElementById("filterDateTo");
+    const filterAmountMin = document.getElementById("filterAmountMin");
+    const filterAmountMax = document.getElementById("filterAmountMax");
+    
+    if (filterDateFrom) filterDateFrom.addEventListener("change", renderTransactionsTable);
+    if (filterDateTo) filterDateTo.addEventListener("change", renderTransactionsTable);
+    if (filterAmountMin) filterAmountMin.addEventListener("input", renderTransactionsTable);
+    if (filterAmountMax) filterAmountMax.addEventListener("input", renderTransactionsTable);
+    
+    // فلاتر القوائم المنسدلة
+    const filterType = document.getElementById("filterType");
+    const filterDepartment = document.getElementById("filterDepartment");
+    const filterCategory = document.getElementById("filterCategory");
+    
+    if (filterType) filterType.addEventListener("change", renderTransactionsTable);
+    if (filterDepartment) filterDepartment.addEventListener("change", renderTransactionsTable);
+    if (filterCategory) filterCategory.addEventListener("change", renderTransactionsTable);
+
     // زر تسجيل الخروج
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) logoutBtn.onclick = logout;
+    
+    // تهيئة البحث المتقدم
+    initAdvancedSearch();
 }
 
 // ==================== بدء التطبيق ====================
