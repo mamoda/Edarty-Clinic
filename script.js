@@ -91,43 +91,210 @@ function formatCurrency(amount) {
     return amount.toFixed(2) + " ₪";
 }
 
-// ==================== إدارة المستخدمين ====================
+// ==================== دالة تسجيل الدخول الجديدة ====================
 function initLogin() {
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const roleSelect = document.getElementById("roleSelect");
-    const passwordInput = document.getElementById("passwordInput");
-    const loginForm = document.getElementById("loginForm");
-    const userInfo = document.getElementById("userInfo");
-    const userNameSpan = document.getElementById("userName");
-    const userRoleSpan = document.getElementById("userRole");
+    const overlayLoginBtn = document.getElementById("overlayLoginBtn");
+    const overlayRoleSelect = document.getElementById("overlayRoleSelect");
+    const overlayPasswordInput = document.getElementById("overlayPasswordInput");
+    const appOverlay = document.getElementById("appOverlay");
+    const mainContent = document.getElementById("mainContent");
     
-    loginBtn.onclick = () => {
-        const role = roleSelect.value;
-        const password = passwordInput.value;
+    overlayLoginBtn.onclick = () => {
+        const role = overlayRoleSelect.value;
+        const password = overlayPasswordInput.value;
+        
         if (users[role] && users[role].password === password) {
-            currentUser = { loggedIn: true, name: users[role].name, role: role };
-            userNameSpan.textContent = currentUser.name;
-            userRoleSpan.textContent = role === "admin" ? "مدير" : role === "accountant" ? "محاسب" : "استقبال";
-            loginForm.style.display = "none";
-            userInfo.style.display = "flex";
+            currentUser = { 
+                loggedIn: true, 
+                name: users[role].name, 
+                role: role 
+            };
+            
+            // تحديث شريط المستخدم
+            const userNameSpan = document.getElementById("userName");
+            const userRoleSpan = document.getElementById("userRole");
+            const loginForm = document.getElementById("loginForm");
+            const userInfo = document.getElementById("userInfo");
+            
+            if (userNameSpan) userNameSpan.textContent = currentUser.name;
+            if (userRoleSpan) {
+                userRoleSpan.textContent = role === "admin" ? "مدير" : role === "accountant" ? "محاسب" : "استقبال";
+            }
+            if (loginForm) loginForm.style.display = "none";
+            if (userInfo) userInfo.style.display = "flex";
+            
+            // إخفاء طبقة التغطية وإظهار المحتوى
+            appOverlay.classList.add("hidden");
+            mainContent.classList.add("visible");
+            document.body.classList.remove("loading");
+            
             showToast(`مرحباً ${currentUser.name}`, "success");
+            
+            // تطبيق الصلاحيات
             applyPermissions();
+            
+            // إعادة تحميل البيانات
+            renderAll();
         } else {
             showToast("كلمة المرور غير صحيحة", "error");
+            overlayPasswordInput.value = "";
+            overlayPasswordInput.focus();
         }
     };
     
-    logoutBtn.onclick = () => {
-        currentUser = { loggedIn: false, name: "", role: "" };
-        loginForm.style.display = "flex";
-        userInfo.style.display = "none";
-        passwordInput.value = "";
-        showToast("تم تسجيل الخروج", "info");
-        applyPermissions();
-    };
+    // إدخال كلمة المرور بالضغط على Enter
+    overlayPasswordInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            overlayLoginBtn.click();
+        }
+    });
 }
 
+// ==================== دالة تسجيل الخروج ====================
+function logout() {
+    currentUser = { loggedIn: false, name: "", role: "" };
+    
+    // إظهار طبقة التغطية وإخفاء المحتوى
+    const appOverlay = document.getElementById("appOverlay");
+    const mainContent = document.getElementById("mainContent");
+    const overlayPasswordInput = document.getElementById("overlayPasswordInput");
+    
+    appOverlay.classList.remove("hidden");
+    mainContent.classList.remove("visible");
+    document.body.classList.add("loading");
+    
+    // مسح حقول تسجيل الدخول
+    if (overlayPasswordInput) overlayPasswordInput.value = "";
+    
+    // تحديث شريط المستخدم
+    const loginForm = document.getElementById("loginForm");
+    const userInfo = document.getElementById("userInfo");
+    if (loginForm) loginForm.style.display = "flex";
+    if (userInfo) userInfo.style.display = "none";
+    
+    showToast("تم تسجيل الخروج بنجاح", "info");
+}
+
+// ==================== تعديل دالة applyPermissions ====================
+function applyPermissions() {
+    if (!currentUser.loggedIn) return;
+    
+    const permissions = users[currentUser.role].permissions;
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const addButtons = document.querySelectorAll(".btn-primary");
+    
+    // تمكين جميع الأزرار
+    tabBtns.forEach(btn => btn.disabled = false);
+    addButtons.forEach(btn => btn.disabled = false);
+    
+    // تطبيق الصلاحيات على التبويبات
+    if (permissions[0] !== "all") {
+        tabBtns.forEach(btn => {
+            const tabId = btn.dataset.tab;
+            if (!permissions.includes(tabId) && !permissions.includes(tabId + "_view")) {
+                btn.style.display = "none";
+            } else {
+                btn.style.display = "flex";
+            }
+        });
+    }
+    
+    // تعطيل أزرار معينة حسب الصلاحيات
+    if (currentUser.role === "reception") {
+        // موظف الاستقبال لا يمكنه إضافة معاملات مالية
+        const addTransactionBtn = document.getElementById("addTransactionBtn");
+        if (addTransactionBtn) addTransactionBtn.disabled = true;
+    }
+}
+
+// ==================== تعديل دالة renderAll لمنع عرض البيانات قبل تسجيل الدخول ====================
+function renderAll() {
+    if (!currentUser.loggedIn) return;
+    
+    updateStats();
+    renderRecentTransactions();
+    renderTransactionsTable();
+    renderPatientsTable();
+    renderStaffTable();
+    renderInventoryTable();
+    renderAppointmentsTable();
+    updateCharts();
+    updateUpcomingAppointments();
+    loadSettings();
+}
+
+// ==================== تعديل دالة init ====================
+function init() {
+    // إضافة class loading للجسم
+    document.body.classList.add("loading");
+    
+    // إخفاء المحتوى الرئيسي في البداية
+    const mainContent = document.getElementById("mainContent");
+    if (mainContent) mainContent.classList.remove("visible");
+    
+    loadFromStorage();
+    initLogin();
+    initTabs();
+    displayCurrentDate();
+    initEventListeners();
+    
+    // تحديث قوائم المواعيد بعد تحميل البيانات
+    updateAppointmentSelects();
+}
+
+// ==================== تحديث قوائم المواعيد ====================
+function updateAppointmentSelects() {
+    const patientSelect = document.getElementById("appointmentPatient");
+    const doctorSelect = document.getElementById("appointmentDoctor");
+    
+    if (patientSelect) {
+        patientSelect.innerHTML = '<option value="">اختر المريض</option>' + 
+            appData.patients.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+    }
+    if (doctorSelect) {
+        doctorSelect.innerHTML = '<option value="">اختر الطبيب</option>' + 
+            appData.staff.filter(s => s.type === "doctor").map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+    }
+}
+
+// ==================== تعديل دالة initEventListeners ====================
+function initEventListeners() {
+    // أزرار الإضافة
+    document.getElementById("addTransactionBtn")?.addEventListener("click", addTransaction);
+    document.getElementById("addPatientBtn")?.addEventListener("click", addPatient);
+    document.getElementById("addStaffBtn")?.addEventListener("click", addStaff);
+    document.getElementById("addItemBtn")?.addEventListener("click", addInventoryItem);
+    document.getElementById("addAppointmentBtn")?.addEventListener("click", addAppointment);
+    
+    // الفلاتر
+    document.getElementById("applyFiltersBtn")?.addEventListener("click", renderTransactionsTable);
+    document.getElementById("resetFiltersBtn")?.addEventListener("click", () => {
+        document.querySelectorAll("#transactions .filter-row input, #transactions .filter-row select").forEach(el => el.value = "");
+        renderTransactionsTable();
+    });
+    
+    // التقارير والتصدير
+    document.getElementById("exportExcelBtn")?.addEventListener("click", exportToExcel);
+    document.getElementById("generateReportBtn")?.addEventListener("click", generateReport);
+    
+    // النسخ الاحتياطي
+    document.getElementById("backupExportBtn")?.addEventListener("click", exportBackup);
+    document.getElementById("backupImportBtn")?.addEventListener("click", () => {
+        const file = document.getElementById("backupFileInput").files[0];
+        if (file) importBackup(file);
+        else showToast("اختر ملفاً أولاً", "error");
+    });
+    document.getElementById("resetSystemBtn")?.addEventListener("click", resetSystem);
+    document.getElementById("saveSettingsBtn")?.addEventListener("click", saveSettings);
+    
+    // البحث
+    document.getElementById("searchPatientBtn")?.addEventListener("click", renderPatientsTable);
+    document.getElementById("searchPatient")?.addEventListener("input", renderPatientsTable);
+    
+    // زر تسجيل الخروج
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) logoutBtn.onclick = logout;
+}
 function applyPermissions() {
     const permissions = currentUser.role ? users[currentUser.role].permissions : [];
     const tabBtns = document.querySelectorAll(".tab-btn");

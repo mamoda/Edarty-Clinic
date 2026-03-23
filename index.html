@@ -18,27 +18,55 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- شريط تسجيل الدخول والحالة -->
-    <div class="login-bar" id="loginBar">
-        <div class="login-container">
-            <div class="user-info" id="userInfo" style="display: none;">
-                <i class="fas fa-user-circle"></i>
-                <span id="userName">Admin</span>
-                <span id="userRole" class="user-role"></span>
-                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج</button>
-            </div>
-            <div class="login-form" id="loginForm">
-                <select id="roleSelect">
-                    <option value="admin">مدير النظام</option>
-                    <option value="accountant">محاسب</option>
-                    <option value="reception">موظف استقبال</option>
-                </select>
-                <input type="password" id="passwordInput" placeholder="كلمة المرور">
-                <button class="btn-login" id="loginBtn">دخول</button>
-            </div>
+
+
+    <!-- طبقة التغطية وشاشة تسجيل الدخول -->
+<div class="app-overlay" id="appOverlay">
+    <div class="login-screen">
+        <div class="logo-icon">
+            <i class="fas fa-stethoscope"></i>
+        </div>
+        <h2>Edarty Pro</h2>
+        <p class="subtitle">نظام إدارة المؤسسات الطبية المتكامل</p>
+        
+        <div class="login-input-group">
+            <label>نوع المستخدم</label>
+            <select id="overlayRoleSelect">
+                <option value="admin">مدير النظام</option>
+                <option value="accountant">محاسب</option>
+                <option value="reception">موظف استقبال</option>
+            </select>
+        </div>
+        
+        <div class="login-input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="overlayPasswordInput" placeholder="أدخل كلمة المرور">
+        </div>
+        
+        <button class="login-btn" id="overlayLoginBtn">
+            <i class="fas fa-sign-in-alt"></i> دخول
+        </button>
+        
+        <div class="demo-credentials">
+            <p><strong>بيانات الدخول التجريبية:</strong></p>
+            <p>مدير النظام: <strong>admin123</strong></p>
+            <p>محاسب: <strong>acc123</strong></p>
+            <p>موظف استقبال: <strong>rec123</strong></p>
         </div>
     </div>
+</div>
 
+<!-- شريط حالة المستخدم (يظهر بعد تسجيل الدخول فقط) -->
+<div class="login-bar" id="loginBar" style="display: none;">
+    <div class="login-container">
+        <div class="user-info" id="userInfo">
+            <i class="fas fa-user-circle"></i>
+            <span id="userName">Admin</span>
+            <span id="userRole" class="user-role"></span>
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+        </div>
+    </div>
+</div>
     <div class="app-container">
         <!-- الرأس -->
         <div class="top-bar">
