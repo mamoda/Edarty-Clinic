@@ -14,6 +14,7 @@ body {
 .app-container {
     max-width: 1600px;
     margin: 0 auto;
+    
 }
 
 /* شريط تسجيل الدخول */
@@ -482,4 +483,147 @@ footer {
         padding: 0;
         background: white;
     }
+}
+
+/* طبقة التغطية قبل تسجيل الدخول */
+.app-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.5s ease;
+}
+
+.app-overlay.hidden {
+    display: none;
+}
+
+.login-screen {
+    background: white;
+    border-radius: 30px;
+    padding: 40px;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-screen h2 {
+    color: #1e3c72;
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+.login-screen .logo-icon {
+    font-size: 60px;
+    color: #2a6f97;
+    margin-bottom: 20px;
+}
+
+.login-screen .subtitle {
+    color: #718096;
+    margin-bottom: 30px;
+}
+
+.login-input-group {
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+.login-input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.login-input-group select,
+.login-input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.login-input-group select:focus,
+.login-input-group input:focus {
+    outline: none;
+    border-color: #2a6f97;
+    box-shadow: 0 0 0 3px rgba(42,111,151,0.1);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.demo-credentials {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 12px;
+    text-align: right;
+}
+
+.demo-credentials p {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #4a5568;
+}
+
+.demo-credentials strong {
+    color: #2a6f97;
+}
+
+/* إخفاء المحتوى الرئيسي قبل تسجيل الدخول */
+.main-content {
+    display: none;
+}
+
+.main-content.visible {
+    display: block;
+}
+
+/* تعطيل التفاعل مع المحتوى قبل تسجيل الدخول */
+body.loading * {
+    pointer-events: none;
+}
+
+body.loading .app-overlay {
+    pointer-events: auto;
 }
